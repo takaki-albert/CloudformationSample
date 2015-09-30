@@ -122,15 +122,15 @@
       "Type" : "AWS::S3::Bucket",
       "Properties" : {
          "AccessControl" : "AuthenticatedRead",
-         "BucketName" : "SampleProdBucket",
-      },
+         "BucketName" : "SampleProdBucket"
+      }
     },
     "DevS3Bucket" : {
       "Type" : "AWS::S3::Bucket",
       "Properties" : {
          "AccessControl" : "AuthenticatedRead",
-         "BucketName" : "SampleDevBucket",
-      },
+         "BucketName" : "SampleDevBucket"
+      }
     },
 
 
@@ -347,13 +347,28 @@
         }
       }
     },    
-    "myLayer": {
+    "BatchLayer": {
       "Type": "AWS::OpsWorks::Layer",
-      "DependsOn": "myApp",
+      "DependsOn": "CpmWebApp",
       "Properties": {
         "StackId": {"Ref": "myStack"},
         "Type": "php-app",
-	    "Shortname" : "php-app",
+        "Shortname" : "Batch",
+        "EnableAutoHealing" : "true",
+        "AutoAssignElasticIps" : "false",
+        "AutoAssignPublicIps" : "true",
+        "Name": "MyPHPApp",
+        "CustomRecipes" : {
+          "Configure" : ["phpapp::appsetup"]
+        }
+      }
+    },
+    "WebLayer": {
+      "Type": "AWS::OpsWorks::Layer",
+      "Properties": {
+        "StackId": {"Ref": "myStack"},
+        "Type": "php-app",
+        "Shortname" : "Web",
         "EnableAutoHealing" : "true",
         "AutoAssignElasticIps" : "false",
         "AutoAssignPublicIps" : "true",
@@ -369,7 +384,7 @@
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
                           { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
         "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "myLayer"}],
+        "LayerIds": [{"Ref": "myLayer"}]
       }
     },    
     "ProdBatch": {
@@ -378,7 +393,7 @@
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
                           { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
         "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "myLayer"}],
+        "LayerIds": [{"Ref": "myLayer"}]
       }
     },    
     "DevWeb": {
@@ -387,7 +402,7 @@
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
                           { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
         "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "myLayer"}],
+        "LayerIds": [{"Ref": "myLayer"}]
       }
     },    
     "DevBatch": {
@@ -396,7 +411,7 @@
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
                           { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
         "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "myLayer"}],
+        "LayerIds": [{"Ref": "myLayer"}]
       }
     },    
     "CpmWebApp" : {
