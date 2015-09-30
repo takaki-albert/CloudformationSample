@@ -1,38 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Parameters": {
-    "ServiceRole": {
-      "Default": "aws-opsworks-service-role",
-      "Description": "The OpsWorks service role",
-      "Type": "String",
-      "MinLength": "1",
-      "MaxLength": "64",
-      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9-]*",
-      "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
-    },
-    "InstanceRole": {
-      "Default": "aws-opsworks-ec2-role",
-      "Description": "The OpsWorks instance role",
-      "Type": "String",
-      "MinLength": "1",
-      "MaxLength": "64",
-      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9-]*",
-      "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
-    },
-    "AppName": {
-      "Default": "myapp",
-      "Description": "The app name",
-      "Type": "String",
-      "MinLength": "1",
-      "MaxLength": "64",
-      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
-      "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
-    },
-    "MysqlRootPassword" : {
-      "Description" : "MysqlRootPassword",
-      "NoEcho" : "true",
-      "Type" : "String"
-    }
   },
 
   "Mappings" : {
@@ -105,36 +73,66 @@
 
   "Resources": {
     
-    "redshift" : {
+    "RedshiftProd" : {
       "Type" : "AWS::Redshift::Cluster",
       "Properties" : {
         "ClusterType" : "single-node",
         "NodeType" : "dc1.large",
         "DBName" : "template",
-        "MasterUsername" : "albertadmin",
+        "MasterUsername" : "admin",
         "MasterUserPassword" : "TestPassword",               
-        "VpcSecurityGroupIds" : [ "sg-7c6c2e19" ],
-        "ClusterSubnetGroupName" : { "Ref" : "RedshiftClusterSubnetGroup" },
+        "VpcSecurityGroupIds" : [ { "Ref" : "ClusterSecurityGroup" } ],
+        "ClusterSubnetGroupName" : { "Ref" : "ProdClusterSubnetGroup" },
         "PubliclyAccessible" : "false",
         "Port" : "5439"
       }
     },
-    "RedshiftClusterSubnetGroup" : {
+    "ProdClusterSubnetGroup" : {
       "Type" : "AWS::Redshift::ClusterSubnetGroup",
       "Properties" : {
         "Description" : "Cluster subnet group",
-        "SubnetIds" : [ "subnet-2abd325d" ]
+        "SubnetIds" : [ { "Ref" : "ProdClusterSubnet" } ]
+      }
+    },
+    "RedshiftDev" : {
+      "Type" : "AWS::Redshift::Cluster",
+      "Properties" : {
+        "ClusterType" : "single-node",
+        "NodeType" : "dc1.large",
+        "DBName" : "template",
+        "MasterUsername" : "admin",
+        "MasterUserPassword" : "TestPassword",               
+        "VpcSecurityGroupIds" : [ { "Ref" : "ClusterSecurityGroup" } ],
+        "ClusterSubnetGroupName" : { "Ref" : "DevClusterSubnetGroup" },
+        "PubliclyAccessible" : "false",
+        "Port" : "5439"
+      }
+    },
+    "DevClusterSubnetGroup" : {
+      "Type" : "AWS::Redshift::ClusterSubnetGroup",
+      "Properties" : {
+        "Description" : "Cluster subnet group",
+        "SubnetIds" : [ { "Ref" : "DevClusterSubnet" } ]
       }
     },
 
-    "S3Bucket" : {
+
+
+    "ProdS3Bucket" : {
       "Type" : "AWS::S3::Bucket",
       "Properties" : {
          "AccessControl" : "AuthenticatedRead",
-         "BucketName" : "SampleBucket",
+         "BucketName" : "SampleProdBucket",
       },
-      "DeletionPolicy" : "Retain"
-   }
+    },
+    "DevS3Bucket" : {
+      "Type" : "AWS::S3::Bucket",
+      "Properties" : {
+         "AccessControl" : "AuthenticatedRead",
+         "BucketName" : "SampleDevBucket",
+      },
+    },
+
 
 
     "VPC" : {
@@ -144,12 +142,35 @@
         "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ]
       }
     },
-
-    "Subnet" : {
+    "ProdClusterSubnet" : {
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
         "VpcId" : { "Ref" : "VPC" },
         "CidrBlock" : "10.0.0.0/24",
+        "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ]
+      }
+    },
+    "DevClusterSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.1.0/24",
+        "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ]
+      }
+    },
+    "ProdSeverSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.2.0/24",
+        "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ]
+      }
+    },
+    "DevServerSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.3.0/24",
         "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ]
       }
     },
@@ -160,7 +181,6 @@
         "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ]
       }
     },
-
     "AttachGateway" : {
        "Type" : "AWS::EC2::VPCGatewayAttachment",
        "Properties" : {
@@ -176,7 +196,6 @@
         "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ]
       }
     },
-
     "Route" : {
       "Type" : "AWS::EC2::Route",
       "DependsOn" : "AttachGateway",
@@ -202,7 +221,6 @@
         "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ]
       }
     },
-
     "InboundHTTPNetworkAclEntry" : {
       "Type" : "AWS::EC2::NetworkAclEntry",
       "Properties" : {
@@ -215,7 +233,6 @@
         "PortRange" : {"From" : "80", "To" : "80"}
       }
     },
-
     "InboundSSHNetworkAclEntry" : {
       "Type" : "AWS::EC2::NetworkAclEntry",
       "Properties" : {
@@ -228,7 +245,6 @@
         "PortRange" : {"From" : "22", "To" : "22"}
       }
     },
-
     "InboundResponsePortsNetworkAclEntry" : {
       "Type" : "AWS::EC2::NetworkAclEntry",
       "Properties" : {
@@ -241,7 +257,6 @@
         "PortRange" : {"From" : "1024", "To" : "65535"}
       }
     },
-
     "OutBoundHTTPNetworkAclEntry" : {
       "Type" : "AWS::EC2::NetworkAclEntry",
       "Properties" : {
@@ -254,7 +269,6 @@
         "PortRange" : {"From" : "80", "To" : "80"}
       }
     },
-
     "OutBoundHTTPSNetworkAclEntry" : {
       "Type" : "AWS::EC2::NetworkAclEntry",
       "Properties" : {
@@ -267,7 +281,6 @@
         "PortRange" : {"From" : "443", "To" : "443"}
       }
     },
-
     "OutBoundResponsePortsNetworkAclEntry" : {
       "Type" : "AWS::EC2::NetworkAclEntry",
       "Properties" : {
@@ -280,21 +293,11 @@
         "PortRange" : {"From" : "1024", "To" : "65535"}
       }
     },
-
     "SubnetNetworkAclAssociation" : {
       "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "Subnet" },
         "NetworkAclId" : { "Ref" : "NetworkAcl" }
-      }
-    },
-
-    "IPAddress" : {
-      "Type" : "AWS::EC2::EIP",
-      "DependsOn" : "AttachGateway",
-      "Properties" : {
-        "Domain" : "vpc",
-        "InstanceId" : { "Ref" : "WebServerInstance" }
       }
     },
 
@@ -309,110 +312,18 @@
          ]
       }
     },
-
-
-    "WebServerInstance" : {
-      "Type" : "AWS::EC2::Instance",
-      "Metadata" : {
-        "Comment" : "Install a simple PHP application",
-        "AWS::CloudFormation::Init" : {
-          "config" : {
-            "packages" : {
-              "yum" : {
-                "httpd"             : [],
-                "php"               : []
-              }
-            },
-
-            "files" : {
-
-              "/var/www/html/index.php" : {
-                "content" : { "Fn::Join" : ["", [
-                  "<?php\n",
-                  "echo '<h1>AWS CloudFormation sample PHP application</h1>';\n",
-                  "?>\n"
-                ]]},
-                "mode"    : "000644",
-                "owner"   : "apache",
-                "group"   : "apache"
-              },
-
-
-              "/etc/cfn/cfn-hup.conf" : {
-                "content" : { "Fn::Join" : ["", [
-                  "[main]\n",
-                  "stack=", { "Ref" : "AWS::StackId" }, "\n",
-                  "region=", { "Ref" : "AWS::Region" }, "\n"
-                ]]},
-                "mode"    : "000400",
-                "owner"   : "root",
-                "group"   : "root"
-              },
-
-              "/etc/cfn/hooks.d/cfn-auto-reloader.conf" : {
-                "content": { "Fn::Join" : ["", [
-                  "[cfn-auto-reloader-hook]\n",
-                  "triggers=post.update\n",
-                  "path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init\n",
-                  "action=/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r WebServerInstance ",
-                                                   " --region     ", { "Ref" : "AWS::Region" }, "\n",
-                  "runas=root\n"
-                ]]}
-              }
-            },
-
-            "services" : {
-              "sysvinit" : {
-                "httpd"    : { "enabled" : "true", "ensureRunning" : "true" },
-                "sendmail" : { "enabled" : "false", "ensureRunning" : "false" }
-              }
-            }
-          }
-        }
-      },
+    "ClusterSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
-        "ImageId" : { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "AMI" ]},
-        "SecurityGroupIds" : [{ "Ref" : "InstanceSecurityGroup" }],
-        "SubnetId" : { "Ref" : "Subnet" },
-        "InstanceType" : { "Ref" : "InstanceType" },
-        "KeyName" : { "Ref" : "KeyName" },
-        "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ],
-        "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
-          "#!/bin/bash\n",
-          "yum update -y aws-cfn-bootstrap\n",
-
-          "# Helper function\n",
-          "function error_exit\n",
-          "{\n",
-          "  /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '", { "Ref" : "WebServerWaitHandle" }, "'\n",
-          "  exit 1\n",
-          "}\n",
-
-          "# Install the simple web page\n",
-          "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r WebServerInstance ",
-          "         --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
-
-          "# Start up the cfn-hup daemon to listen for changes to the Web Server metadata\n",
-          "/opt/aws/bin/cfn-hup || error_exit 'Failed to start cfn-hup'\n",
-
-          "# All done so signal success\n",
-          "/opt/aws/bin/cfn-signal -e 0 -r \"WebServer setup complete\" '", { "Ref" : "WebServerWaitHandle" }, "'\n"
-        ]]}}
+        "VpcId" : { "Ref" : "VPC" },
+        "GroupDescription" : "Enable access via port 5439",
+        "SecurityGroupIngress" : [
+          { "IpProtocol" : "tcp", "FromPort" : "5439", "ToPort" : "5439", "CidrIp" : "0.0.0.0/0"}
+         ]
       }
     },
 
-    "WebServerWaitHandle" : {
-      "Type" : "AWS::CloudFormation::WaitConditionHandle"
-    },
 
-    "WebServerWaitCondition" : {
-      "Type" : "AWS::CloudFormation::WaitCondition",
-      "DependsOn" : "WebServerInstance",
-      "Properties" : {
-        "Handle" : {"Ref" : "WebServerWaitHandle"},
-        "Timeout" : "300"
-      }
-    },
 
 
     
@@ -424,10 +335,10 @@
           "Ref": "AWS::StackName"
         },
         "ServiceRoleArn": {
-          "Fn::Join": [ "", ["arn:aws:iam::", {"Ref": "AWS::AccountId"}, ":role/", {"Ref": "ServiceRole"}] ]
+          "Fn::Join": [ "", ["arn:aws:iam::", {"Ref": "AWS::AccountId"}, ":role/", "aws-opsworks-ec2-role"] ]
         },
         "DefaultInstanceProfileArn": {
-          "Fn::Join": [ "", ["arn:aws:iam::", {"Ref": "AWS::AccountId"}, ":instance-profile/", {"Ref": "InstanceRole"}] ]
+          "Fn::Join": [ "", ["arn:aws:iam::", {"Ref": "AWS::AccountId"}, ":instance-profile/", "aws-opsworks-ec2-role"] ]
         },
         "UseCustomCookbooks": "true",
         "CustomCookbooksSource": {
@@ -452,78 +363,43 @@
         }
       }
     },
-    "DBLayer" : {
-      "Type" : "AWS::OpsWorks::Layer",
-      "DependsOn": "myApp",
-      "Properties" : {
-        "StackId" : {"Ref":"myStack"},
-        "Type" : "db-master",
-	    "Shortname" : "db-layer",
-        "EnableAutoHealing" : "true",
-        "AutoAssignElasticIps" : "false",
-        "AutoAssignPublicIps" : "true",
-        "Name" : "MyMySQL",
-        "CustomRecipes" : {
-          "Setup" : ["phpapp::dbsetup"]
-        },
-        "Attributes" : {
-          "MysqlRootPassword" : {"Ref":"MysqlRootPassword"},
-          "MysqlRootPasswordUbiquitous": "true"
-        },
-        "VolumeConfigurations":[{"MountPoint":"/vol/mysql","NumberOfDisks":1,"Size":10}]
-      }
-    },    
-    "ELBAttachment" : {
-      "Type" : "AWS::OpsWorks::ElasticLoadBalancerAttachment",
-      "Properties" : {
-        "ElasticLoadBalancerName" : { "Ref" : "ELB" },
-        "LayerId" : { "Ref" : "myLayer" }
-      }
-    },	
-    "ELB" : {
-      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
-      "Properties": {
-        "AvailabilityZones": { "Fn::GetAZs" : "" } ,
-        "Listeners": [{
-          "LoadBalancerPort": "80",
-          "InstancePort": "80",
-          "Protocol": "HTTP",
-          "InstanceProtocol": "HTTP"
-        }],
-        "HealthCheck": {
-          "Target": "HTTP:80/",
-          "HealthyThreshold": "2",
-          "UnhealthyThreshold": "10",
-          "Interval": "30",
-          "Timeout": "5"
-        }
-      }
-    },
-    "myAppInstance1": {
+    "ProdWeb": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+                          { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
         "StackId": {"Ref": "myStack"},
         "LayerIds": [{"Ref": "myLayer"}],
-        "InstanceType": "m1.small"
       }
     },    
-    "myAppInstance2": {
+    "ProdBatch": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+                          { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
         "StackId": {"Ref": "myStack"},
         "LayerIds": [{"Ref": "myLayer"}],
-        "InstanceType": "m1.small"
       }
-    },
-    "myDBInstance": {
+    },    
+    "DevWeb": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+                          { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
         "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "DBLayer"}],
-        "InstanceType": "m1.small"
+        "LayerIds": [{"Ref": "myLayer"}],
       }
-    },
-    "myApp" : {
+    },    
+    "DevBatch": {
+      "Type": "AWS::OpsWorks::Instance",
+      "Properties": {
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+                          { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
+        "StackId": {"Ref": "myStack"},
+        "LayerIds": [{"Ref": "myLayer"}],
+      }
+    },    
+    "CpmWebApp" : {
       "Type" : "AWS::OpsWorks::App",
       "Properties" : {
         "StackId" : {"Ref":"myStack"},
@@ -532,7 +408,7 @@
         "AppSource" : {
           "Type" : "git",
           "Url" : "git://github.com/amazonwebservices/opsworks-demo-php-simple-app.git",
-          "Revision" : "version2"
+          "Revision" : "master"
         },
         "Attributes" : {
           "DocumentRoot" : "web"
