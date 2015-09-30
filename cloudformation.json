@@ -206,10 +206,17 @@
       }
     },
 
-    "SubnetRouteTableAssociation" : {
+    "ClusterSubnetRouteTableAssociation" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
-        "SubnetId" : { "Ref" : "Subnet" },
+        "SubnetId" : { "Ref" : "ClusterSubnet" },
+        "RouteTableId" : { "Ref" : "RouteTable" }
+      }
+    },
+    "InstanceSubnetRouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "InstanceSubnet" },
         "RouteTableId" : { "Ref" : "RouteTable" }
       }
     },
@@ -307,7 +314,7 @@
         "VpcId" : { "Ref" : "VPC" },
         "GroupDescription" : "Enable SSH access via port 22",
         "SecurityGroupIngress" : [
-          {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "SSHLocation"}},
+          {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : "0.0.0.0/0"},
           { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0"}
          ]
       }
@@ -384,7 +391,7 @@
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
                           { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
         "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "myLayer"}]
+        "LayerIds": [{"Ref": "WebLayer"}]
       }
     },    
     "ProdBatch": {
@@ -393,7 +400,7 @@
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
                           { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
         "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "myLayer"}]
+        "LayerIds": [{"Ref": "BatchLayer"}]
       }
     },    
     "DevWeb": {
@@ -402,7 +409,7 @@
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
                           { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
         "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "myLayer"}]
+        "LayerIds": [{"Ref": "WebLayer"}]
       }
     },    
     "DevBatch": {
@@ -410,8 +417,8 @@
       "Properties": {
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
                           { "Fn::FindInMap" : [ "AWSInstanceType2Arch", "t2.micro" , "Arch" ] } ] },
-        "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "myLayer"}]
+        "StackId": {"Ref": "Stack"},
+        "LayerIds": [{"Ref": "BatchLayer"}]
       }
     },    
     "CpmWebApp" : {
