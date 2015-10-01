@@ -73,7 +73,7 @@
 
   "Resources": {
     
-    "RedshiftProd" : {
+    "RedshiftCluster" : {
       "Type" : "AWS::Redshift::Cluster",
       "Properties" : {
         "ClusterType" : "single-node",
@@ -82,59 +82,28 @@
         "MasterUsername" : "admin",
         "MasterUserPassword" : "TestPassword1",               
         "VpcSecurityGroupIds" : [ { "Ref" : "ClusterSecurityGroup" } ],
-        "ClusterSubnetGroupName" : { "Ref" : "ProdClusterSubnetGroup" },
+        "ClusterSubnetGroupName" : { "Ref" : "ClusterSubnetGroup" },
         "PubliclyAccessible" : "false",
         "Port" : "5439"
       },
       "DependsOn" : "ClusterSecurityGroup"
     },
-    "ProdClusterSubnetGroup" : {
+    "ClusterSubnetGroup" : {
       "Type" : "AWS::Redshift::ClusterSubnetGroup",
       "Properties" : {
         "Description" : "Cluster subnet group",
-        "SubnetIds" : [ { "Ref" : "ProdClusterSubnet" } ]
-      }
-    },
-    "RedshiftDev" : {
-      "Type" : "AWS::Redshift::Cluster",
-      "Properties" : {
-        "ClusterType" : "single-node",
-        "NodeType" : "dc1.large",
-        "DBName" : "template",
-        "MasterUsername" : "admin",
-        "MasterUserPassword" : "TestPassword2",               
-        "VpcSecurityGroupIds" : [ { "Ref" : "ClusterSecurityGroup" } ],
-        "ClusterSubnetGroupName" : { "Ref" : "DevClusterSubnetGroup" },
-        "PubliclyAccessible" : "false",
-        "Port" : "5439"
-      },
-      "DependsOn" : "ClusterSecurityGroup"
-    },
-    "DevClusterSubnetGroup" : {
-      "Type" : "AWS::Redshift::ClusterSubnetGroup",
-      "Properties" : {
-        "Description" : "Cluster subnet group",
-        "SubnetIds" : [ { "Ref" : "DevClusterSubnet" } ]
+        "SubnetIds" : [ { "Ref" : "ClusterSubnet" } ]
       }
     },
 
 
-
-    "ProdS3Bucket" : {
+    "S3Bucket" : {
       "Type" : "AWS::S3::Bucket",
       "Properties" : {
          "AccessControl" : "AuthenticatedRead",
-         "BucketName" : "prod-bucket-tkk"
+         "BucketName" : "bucket-tkk"
       }
     },
-    "DevS3Bucket" : {
-      "Type" : "AWS::S3::Bucket",
-      "Properties" : {
-         "AccessControl" : "AuthenticatedRead",
-         "BucketName" : "dev-bucket-tkk"
-      }
-    },
-
 
 
     "VPC" : {
@@ -144,7 +113,7 @@
         "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ]
       }
     },
-    "ProdClusterSubnet" : {
+    "ClusterSubnet" : {
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
         "VpcId" : { "Ref" : "VPC" },
@@ -160,7 +129,7 @@
         "Tags" : [ {"Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} } ]
       }
     },
-    "ProdServerSubnet" : {
+    "ServerSubnet" : {
       "Type" : "AWS::EC2::Subnet",
       "Properties" : {
         "VpcId" : { "Ref" : "VPC" },
@@ -370,9 +339,6 @@
         "AutoAssignElasticIps" : "false",
         "AutoAssignPublicIps" : "true",
         "Name": "DMPBatch",
-        "CustomRecipes" : {
-          "Configure" : ["phpapp::appsetup"]
-        },
 	"VolumeConfigurations" : [ {
           "MountPoint" : "/dev/sdh",
           "NumberOfDisks" : "1",
@@ -392,9 +358,6 @@
         "AutoAssignElasticIps" : "false",
         "AutoAssignPublicIps" : "true",
         "Name": "DMPWeb",
-        "CustomRecipes" : {
-          "Configure" : ["phpapp::appsetup"]
-        },
         "VolumeConfigurations" : [ {
           "MountPoint" : "/dev/sdh",
           "NumberOfDisks" : "1",
@@ -403,7 +366,7 @@
         } ]
       }
     },
-    "ProdWeb": {
+    "Web": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
         "InstanceType": "t2.micro",
@@ -413,7 +376,7 @@
         "LayerIds": [{"Ref": "WebLayer"}]
       }
     },    
-    "ProdBatch": {
+    "Batch": {
       "Type": "AWS::OpsWorks::Instance",
       "Properties": {
         "InstanceType": "t2.micro",
@@ -423,26 +386,7 @@
         "LayerIds": [{"Ref": "BatchLayer"}]
       }
     },    
-    "DevWeb": {
-      "Type": "AWS::OpsWorks::Instance",
-      "Properties": {
-        "InstanceType": "t2.micro",
-        "RootDeviceType" : "ebs",
-        "EbsOptimized" : "false",
-        "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "WebLayer"}]
-      }
-    },    
-    "DevBatch": {
-      "Type": "AWS::OpsWorks::Instance",
-      "Properties": {
-        "InstanceType": "t2.micro",
-        "RootDeviceType" : "ebs",
-        "EbsOptimized" : "false",
-        "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "BatchLayer"}]
-      }
-    },    
+    
     "CpmWebApp" : {
       "Type" : "AWS::OpsWorks::App",
       "Properties" : {
