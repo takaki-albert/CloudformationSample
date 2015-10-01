@@ -340,7 +340,7 @@
         "AutoAssignPublicIps" : "true",
         "Name": "DMPBatch",
 	"VolumeConfigurations" : [ {
-          "MountPoint" : "/dev/sdh",
+          "MountPoint" : "/data",
           "NumberOfDisks" : "1",
           "Size" : "20",
           "VolumeType" : "gp2"
@@ -359,7 +359,7 @@
         "AutoAssignPublicIps" : "true",
         "Name": "DMPWeb",
         "VolumeConfigurations" : [ {
-          "MountPoint" : "/dev/sdh",
+          "MountPoint" : "/data",
           "NumberOfDisks" : "1",
           "Size" : "20",
           "VolumeType" : "gp2"
@@ -373,7 +373,8 @@
         "RootDeviceType" : "ebs",
         "EbsOptimized" : "false",
         "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "WebLayer"}]
+        "LayerIds": [{"Ref": "WebLayer"}],
+        "SshKeyName" : "cloudformation"
       }
     },    
     "Batch": {
@@ -383,7 +384,8 @@
         "RootDeviceType" : "ebs",
         "EbsOptimized" : "false",
         "StackId": {"Ref": "myStack"},
-        "LayerIds": [{"Ref": "BatchLayer"}]
+        "LayerIds": [{"Ref": "BatchLayer"}],
+        "SshKeyName" : "cloudformation"
       }
     },    
     
