@@ -85,7 +85,8 @@
         "ClusterSubnetGroupName" : { "Ref" : "ProdClusterSubnetGroup" },
         "PubliclyAccessible" : "false",
         "Port" : "5439"
-      }
+      },
+      "DependsOn" : "ClusterSecurityGroup"
     },
     "ProdClusterSubnetGroup" : {
       "Type" : "AWS::Redshift::ClusterSubnetGroup",
@@ -106,7 +107,8 @@
         "ClusterSubnetGroupName" : { "Ref" : "DevClusterSubnetGroup" },
         "PubliclyAccessible" : "false",
         "Port" : "5439"
-      }
+      },
+      "DependsOn" : "ClusterSecurityGroup"
     },
     "DevClusterSubnetGroup" : {
       "Type" : "AWS::Redshift::ClusterSubnetGroup",
